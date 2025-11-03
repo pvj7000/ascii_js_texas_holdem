@@ -2,6 +2,29 @@ import { clamp, money } from '../utils.js';
 
 const qs = (selector) => document.querySelector(selector);
 
+const escapeHtml = (input) =>
+  input
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+const highlightCards = (input) => {
+  const safe = escapeHtml(input);
+  const cardPattern = /\[((10|[2-9TJQKA]))([♣♦♥♠])\]/g;
+  const suitClass = {
+    '♣': 'clubs',
+    '♦': 'diamonds',
+    '♥': 'hearts',
+    '♠': 'spades',
+  };
+  return safe.replace(cardPattern, (_, __, rank, suit) => {
+    const cls = suitClass[suit] || 'card';
+    return `<span class="card card--${cls}">[${rank}${suit}]</span>`;
+  });
+};
+
 export const createUI = (state) => {
   const screen = qs('#screen');
   const logEl = qs('#log');
@@ -108,7 +131,7 @@ export const createUI = (state) => {
     const legend =
       'Legend: D/SB/BB = Dealer/Small Blind/Big Blind · IN/FOLDED/ALL-IN/OUT · rnd = this street';
 
-    screen.textContent = [
+    const ascii = [
       hudTop,
       hudMid,
       hudBtm,
@@ -121,6 +144,8 @@ export const createUI = (state) => {
       stateLine,
       legend,
     ].join('\n');
+
+    screen.innerHTML = highlightCards(ascii);
     updateControls();
   };
 
