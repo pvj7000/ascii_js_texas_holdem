@@ -17,7 +17,6 @@ A browser-based Texas Hold'em simulator rendered with ASCII terminal vibes. Play
 └─ README.md
 ```
 
-Open `index.html` directly in any modern browser to play. Everything loads locally.
 
 ## How to play
 
