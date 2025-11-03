@@ -6,10 +6,14 @@ A browser-based Texas Hold'em simulator rendered with ASCII terminal vibes. Play
 
 ```
 /
-├─ index.html          # Skeleton markup and control layout
+├─ index.html            # Skeleton markup and control layout
 ├─ assets/
-│  ├─ css/styles.css   # Theme and responsive tweaks
-│  └─ js/game.js       # Game state, AI, rendering, and controls
+│  ├─ css/styles.css     # Theme and responsive tweaks
+│  └─ js/
+│     ├─ main.js         # App entrypoint wiring state + UI
+│     ├─ utils.js        # Shared helpers (rng, clamping, money formatting)
+│     ├─ core/           # Poker domain: cards, AI, betting flow, showdown
+│     └─ ui/ui.js        # ASCII renderer + DOM control bindings
 └─ README.md
 ```
 
@@ -36,6 +40,7 @@ Open `index.html` directly in any modern browser to play. Everything loads local
 ## Table stakes
 
 * **AI personas:** Rock (tight), Maniac (hyper-aggressive), Station (calls often), and Pro (balanced). Each weighs position, pot odds, and hand strength.
+* **Betting engine:** Turn-order queue ensures everyone responds to raises—no more infinite raise loops from overeager maniacs.
 * **Hand evaluator:** Supports full 7-card evaluation with straight/flush edge cases and side-pot distribution.
 * **RNG:** Uses `crypto.getRandomValues` for shuffle integrity.
 
