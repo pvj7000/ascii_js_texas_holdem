@@ -4,6 +4,8 @@ import { bettingRound } from './betting.js';
 import { showdown } from './showdown.js';
 import { nextIdx } from './table.js';
 
+// Deal two private cards to every non-busted player, matching live Hold'em
+// order (clockwise, one card at a time).
 const dealPrivateCards = (state) => {
   for (let round = 0; round < 2; round++) {
     for (let i = 0; i < state.players.length; i++) {
@@ -13,6 +15,9 @@ const dealPrivateCards = (state) => {
   }
 };
 
+// One complete hand flow: reset stacks, shuffle, deal, run betting rounds
+// through river, then showdown. Returns `false` to stop the game loop when only
+// one player remains.
 export const playHand = async (state, deps) => {
   const { render, log, waitHumanAction } = deps;
   state.handNum += 1;
@@ -91,6 +96,8 @@ export const playHand = async (state, deps) => {
   return true;
 };
 
+// Advance the dealer button to the next eligible seat (skipping busted players)
+// to keep the blind order fair.
 export const rotateDealer = (state) => {
   const n = state.players.length;
   let idx = (state.dealer + 1) % n;

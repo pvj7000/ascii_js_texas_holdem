@@ -1,7 +1,10 @@
 import { clamp, money } from '../utils.js';
 
+// Tiny DOM helper to keep the renderer readable.
 const qs = (selector) => document.querySelector(selector);
 
+// We render the ASCII board using `innerHTML` so we can color cards; sanitize
+// first to avoid letting the log inject markup.
 const escapeHtml = (input) =>
   input
     .replaceAll('&', '&amp;')
@@ -10,6 +13,7 @@ const escapeHtml = (input) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
+// Find card-like tokens (`[Ah]`) and wrap them in span tags for suit coloring.
 const highlightCards = (input) => {
   const safe = escapeHtml(input);
   const cardPattern = /\[((10|[2-9TJQKA]))([♣♦♥♠])\]/g;
@@ -25,6 +29,8 @@ const highlightCards = (input) => {
   });
 };
 
+// Main UI factory: wires DOM controls to game state and exposes rendering +
+// input promises consumed by the game loop.
 export const createUI = (state) => {
   const screen = qs('#screen');
   const logEl = qs('#log');
@@ -37,11 +43,14 @@ export const createUI = (state) => {
   const info = qs('#info');
   raiseInput.value = state.bigBlind;
 
+  // Log entries are prepended so the newest action is always visible on top.
   const log = (message) => {
     logEl.value = `${message}\n${logEl.value}`;
     logEl.scrollTop = 0;
   };
 
+  // Enable/disable action buttons based on whose turn it is and whether the
+  // human already folded/all-in. Also shows min/max raise guidance.
   const updateControls = () => {
     const you = state.players[4];
     const toCall = Math.max(0, state.currentBet - you.roundBet);
@@ -62,6 +71,8 @@ export const createUI = (state) => {
       : 'Waiting for players...';
   };
 
+  // Render the ASCII table + HUD. We mirror live Hold'em: pot and call info up
+  // top, community board in the middle, seats around the bottom.
   const render = () => {
     const players = state.players;
     const n = players.length;
@@ -151,6 +162,8 @@ export const createUI = (state) => {
 
   let humanResolve = null;
 
+  // Promise-based bridge to the main loop: resolve when the human clicks a
+  // button, so betting waits naturally for input.
   const resolveHuman = (payload) => {
     if (!humanResolve) return;
     const resolver = humanResolve;
@@ -196,6 +209,7 @@ export const createUI = (state) => {
       button.addEventListener('click', handler);
     });
 
+  // Utilities used by the game loop after a hand concludes.
   const waitForNextHand = async () => {
     nextHandBtn.disabled = false;
     await waitForButton(nextHandBtn);

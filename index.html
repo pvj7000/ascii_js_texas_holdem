@@ -9,28 +9,32 @@
   <body>
     <div class="wrap">
       <h1>ASCII Texas Hold'em (You vs 4 Players)</h1>
-      <pre id="screen" aria-label="ASCII canvas"></pre>
-      <div class="controls" id="controls">
-        <button id="foldBtn">Fold</button>
-        <button id="checkCallBtn">Check/Call</button>
-        <button id="raiseBtn">Bet/Raise</button>
-        <input
-          class="grow"
-          id="raiseAmount"
-          type="number"
-          min="20"
-          step="10"
-          value="20"
-          aria-label="Bet/Raise amount"
-        />
-        <button id="nextHandBtn" disabled>Next Hand</button>
-        <button id="restartBtn" hidden>Restart</button>
-        <span class="meta" id="info"></span>
-      </div>
-      <textarea id="log" readonly spellcheck="false"></textarea>
-      <div class="meta">
-        Blinds: $10/$20. Results remain after showdown; click
-        <em>Next Hand</em> to continue. Newest log messages on top.
+      <div class="table-grid">
+        <pre id="screen" aria-label="ASCII canvas"></pre>
+        <div class="side-panel">
+          <div class="controls" id="controls">
+            <button id="foldBtn">Fold</button>
+            <button id="checkCallBtn">Check/Call</button>
+            <button id="raiseBtn">Bet/Raise</button>
+            <input
+              class="grow"
+              id="raiseAmount"
+              type="number"
+              min="20"
+              step="10"
+              value="20"
+              aria-label="Bet/Raise amount"
+            />
+            <button id="nextHandBtn" disabled>Next Hand</button>
+            <button id="restartBtn" hidden>Restart</button>
+            <span class="meta" id="info"></span>
+          </div>
+          <textarea id="log" readonly spellcheck="false"></textarea>
+          <div class="meta">
+            Blinds: $10/$20. Results remain after showdown; click
+            <em>Next Hand</em> to continue. Newest log messages on top.
+          </div>
+        </div>
       </div>
     </div>
     <script src="assets/js/main.js" type="module"></script>

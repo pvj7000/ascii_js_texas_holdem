@@ -1,3 +1,5 @@
+// Snapshot of everything the table needs to know for a single hand. State is
+// mutated in-place and passed into the UI to render the ASCII board.
 export const createGameState = () => ({
   smallBlind: 10,
   bigBlind: 20,
@@ -17,6 +19,7 @@ export const createGameState = () => ({
   lastRaiser: null,
   sbIdx: null,
   bbIdx: null,
+  // Total pot equals the sum of per-player commitments (no side-pot math here).
   pot() {
     return this.players.reduce((acc, player) => acc + player.totalBet, 0);
   },

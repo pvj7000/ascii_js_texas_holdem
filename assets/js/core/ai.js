@@ -1,6 +1,8 @@
 import { clamp } from '../utils.js';
 import { eval7 } from './evaluator.js';
 
+// Quick-and-dirty preflop score based on common Hold'em heuristics: pocket pairs
+// are boosted, suited/connectors get extra credit, and large gaps are penalised.
 const preflopStrength = (hole) => {
   const [c1, c2] = [...hole].sort((a, b) => b.v - a.v);
   const pair = c1.v === c2.v;
@@ -14,6 +16,8 @@ const preflopStrength = (hole) => {
   return clamp(strength, 0, 1);
 };
 
+// Postflop strength leans on the exact 7-card evaluator but also nudges for
+// draws (four to a flush/straight) to mimic real players semi-bluffing equity.
 const postflopStrength = (hole, board) => {
   if (board.length === 0) return preflopStrength(hole);
   const score = eval7(hole, board);
@@ -36,6 +40,9 @@ const postflopStrength = (hole, board) => {
   return clamp(base + tail + draw, 0, 1);
 };
 
+// Decide an AI move based on persona (rock/maniac/station/pro), hand strength,
+// position, and pot odds. Each branch mirrors real Hold'em incentives: protect
+// blinds, punish loose calls, and back off with weak holdings.
 export const aiAction = (state, idx) => {
   const me = state.players[idx];
   if (me.folded || me.allIn || me.out) return { type: 'skip' };
