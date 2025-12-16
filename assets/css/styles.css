@@ -45,11 +45,20 @@ h1 {
   margin: 0 auto;
 }
 
-.table-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.9fr);
+.table-layout {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   align-items: stretch;
+  width: 100%;
+}
+
+.table-layout > pre#screen {
+  flex: 1 1 520px;
+}
+
+.table-layout > .side-panel {
+  flex: 0 1 320px;
 }
 
 .side-panel {
@@ -109,6 +118,26 @@ input[type="number"] {
   transition: background 0.15s ease;
 }
 
+.next-hand--pulse {
+  animation: nextHandPulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 0.6rem rgba(101, 255, 101, 0.35);
+}
+
+@keyframes nextHandPulse {
+  0% {
+    box-shadow: 0 0 0.5rem rgba(101, 255, 101, 0.2);
+    transform: translateZ(0) scale(1);
+  }
+  50% {
+    box-shadow: 0 0 1rem rgba(101, 255, 101, 0.5);
+    transform: translateZ(0) scale(1.015);
+  }
+  100% {
+    box-shadow: 0 0 0.5rem rgba(101, 255, 101, 0.2);
+    transform: translateZ(0) scale(1);
+  }
+}
+
 button[disabled],
 input[disabled] {
   opacity: 0.5;
@@ -161,13 +190,13 @@ textarea#log {
   opacity: 0.9;
 }
 
-@media (max-width: 1080px) {
-  .table-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 900px) {
+  .table-layout {
+    flex-direction: column;
   }
 
   pre#screen {
-    min-height: clamp(320px, 50vh, 620px);
+    min-height: clamp(320px, 52vh, 620px);
   }
 
   .side-panel {
@@ -212,8 +241,8 @@ textarea#log {
 
 @media (max-aspect-ratio: 3/4) {
   /* Portrait screens: stack everything and let the table expand vertically */
-  .table-grid {
-    grid-template-columns: 1fr;
+  .table-layout {
+    flex-direction: column;
   }
 
   pre#screen {

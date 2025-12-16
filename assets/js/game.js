@@ -22,6 +22,67 @@ const randInt = (n) => {
   return Number(u[0] % n);
 };
 
+const measureCharWidth = (el) => {
+  const sample = document.createElement('span');
+  sample.textContent = 'MMMMMMMMMM';
+  sample.style.position = 'absolute';
+  sample.style.visibility = 'hidden';
+  sample.style.whiteSpace = 'pre';
+  const style = getComputedStyle(el);
+  sample.style.fontFamily = style.fontFamily;
+  sample.style.fontSize = style.fontSize;
+  sample.style.fontWeight = style.fontWeight;
+  document.body.append(sample);
+  const width = sample.getBoundingClientRect().width / sample.textContent.length;
+  sample.remove();
+  return width || 8;
+};
+
+const fitLine = (text, width) => {
+  const trimmed = text.length > width ? text.slice(0, width) : text;
+  return trimmed.padEnd(width, ' ');
+};
+
+const wrapToWidth = (text, width) => {
+  if (text.length <= width) return [fitLine(text, width)];
+  const words = text.split(' ');
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    const spacer = current ? 1 : 0;
+    if (current.length + word.length + spacer <= width) {
+      current += (current ? ' ' : '') + word;
+      continue;
+    }
+    if (current) lines.push(fitLine(current, width));
+    if (word.length > width) {
+      for (let i = 0; i < word.length; i += width) lines.push(fitLine(word.slice(i, i + width), width));
+      current = '';
+    } else {
+      current = word;
+    }
+  }
+  if (current) lines.push(fitLine(current, width));
+  return lines.length ? lines : [fitLine('', width)];
+};
+
+const buildDivider = (totalWidth, fill = '=') => `+${fill.repeat(Math.max(0, totalWidth - 2))}+`;
+
+const buildRow = (totalWidth, content) => {
+  const inner = Math.max(0, totalWidth - 2);
+  return `|${fitLine(content, inner)}|`;
+};
+
+const buildTitleDivider = (title, totalWidth, fill = '-') => {
+  const inner = Math.max(0, totalWidth - 2);
+  const maxTitle = Math.max(0, inner - 2);
+  const safeTitle = title.length > maxTitle ? `${title.slice(0, Math.max(0, maxTitle - 1))}…` : title;
+  const available = Math.max(0, inner - (safeTitle.length + 2));
+  const left = Math.floor(available / 2);
+  const right = available - left;
+  return `+${fill.repeat(left)} ${safeTitle} ${fill.repeat(right)}+`;
+};
+
 // Cards
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const RV = Object.fromEntries(RANKS.map((r, i) => [r, i + 2]));
@@ -130,45 +191,84 @@ const render = () => {
   const arrow = (i) =>
     GAME.current === i && !P[i].out && !P[i].folded && !P[i].allIn ? '->' : '  ';
 
-  const hudTop = '+================================================================================+';
-  const hudMid = `| POT ${money(GAME.pot()).padEnd(8)} | YOUR STACK ${money(you.stack).padEnd(8)} | TO CALL ${money(
-    toCall,
-  ).padEnd(8)} | HAND #${(GAME.handCount || 0).toString().padEnd(3)} |`;
-  const hudBtm = '+================================================================================+';
+  const compactLayout = window.matchMedia('(max-width: 900px)').matches;
+  const charWidth = measureCharWidth(screen);
+  const availablePx = screen.clientWidth || window.innerWidth || 960;
+  const lineWidth = Math.max(32, Math.floor(availablePx / charWidth) - 2);
+  const innerWidth = Math.max(10, lineWidth - 2);
+  const rowToFull = (line) => fitLine(line, lineWidth);
+
+  const hudSegments = [
+    `POT ${money(GAME.pot())}`,
+    `YOUR STACK ${money(you.stack)}`,
+    `TO CALL ${money(toCall)}`,
+    `HAND #${(GAME.handCount || 0).toString().padEnd(3)}`,
+  ];
+
+  let hudRows;
+  if (compactLayout) {
+    const pairWidth = Math.max(4, Math.floor((innerWidth - 3) / 2));
+    hudRows = [
+      `${hudSegments[0].padEnd(pairWidth)} | ${hudSegments[1].padEnd(pairWidth)}`.slice(0, innerWidth),
+      `${hudSegments[2].padEnd(pairWidth)} | ${hudSegments[3].padEnd(pairWidth)}`.slice(0, innerWidth),
+    ];
+  } else {
+    const spacing = ' | ';
+    hudRows = [hudSegments.join(spacing).slice(0, innerWidth)];
+  }
+
+  const hud = [
+    buildDivider(lineWidth, '='),
+    ...hudRows.map((row) => buildRow(lineWidth, row)),
+    buildDivider(lineWidth, '='),
+  ];
 
   const comm = GAME.board.filter(Boolean).map((c) => c.toString(true)).join(' ');
   const cTitle = `COMMUNITY (${GAME.street.toUpperCase()})`;
-  const cTop = `+----------------------------------- ${cTitle} -----------------------------------+`;
-  const inner = comm || '(none yet)';
-  const cMid = `| ${inner}${' '.repeat(Math.max(0, 82 - inner.length))}|`;
-  const cBtm = '+---------------------------------------------------------------------------------+';
+  const community = [
+    buildTitleDivider(cTitle, lineWidth, '-'),
+    buildRow(lineWidth, comm || '(none yet)'),
+    buildDivider(lineWidth, '-'),
+  ];
 
-  const CELLW = 40;
   const sep = '  ';
-  const ROWW = CELLW * 2 + sep.length;
-  const bodyLines = [];
-  const cell = (i) => {
+  const twoColWidth = Math.max(14, Math.floor((lineWidth - sep.length) / 2));
+  const cell = (i, width) => {
     const p = P[i];
     const r = role(i);
     const l1 = `${arrow(i)} ${p.name}${p.isAI ? '' : ' (You)'} ${r !== ' ' ? '(' + r + ')' : ''}`.trim();
     const l2 = `stk:${money(p.stack)}  in:${money(p.totalBet)}  rnd:${money(p.roundBet)}  ${cardFace(p)}`;
     return {
-      line1: (l1 + '  ' + status(p)).slice(0, CELLW).padEnd(CELLW, ' '),
-      line2: l2.slice(0, CELLW).padEnd(CELLW, ' '),
+      line1: fitLine(`${l1}  ${status(p)}`, width),
+      line2: fitLine(l2, width),
     };
   };
-  const A = [cell(0), cell(1)];
-  const B = [cell(2), cell(3)];
-  const H = cell(4);
-  bodyLines.push(A.map((c) => c.line1).join(sep));
-  bodyLines.push(A.map((c) => c.line2).join(sep));
-  bodyLines.push('');
-  bodyLines.push(B.map((c) => c.line1).join(sep));
-  bodyLines.push(B.map((c) => c.line2).join(sep));
-  bodyLines.push('');
-  const pad = Math.max(0, Math.floor((ROWW - CELLW) / 2));
-  bodyLines.push(' '.repeat(pad) + H.line1);
-  bodyLines.push(' '.repeat(pad) + H.line2);
+
+  const bodyLines = [];
+  if (compactLayout) {
+    [0, 1, 2, 3].forEach((idx) => {
+      const c = cell(idx, innerWidth);
+      bodyLines.push(rowToFull(c.line1));
+      bodyLines.push(rowToFull(c.line2));
+      bodyLines.push(rowToFull(''));
+    });
+    const H = cell(4, innerWidth);
+    bodyLines.push(rowToFull(H.line1));
+    bodyLines.push(rowToFull(H.line2));
+  } else {
+    const A = [cell(0, twoColWidth), cell(1, twoColWidth)];
+    const B = [cell(2, twoColWidth), cell(3, twoColWidth)];
+    const H = cell(4, twoColWidth);
+    const heroPad = Math.max(0, Math.floor((lineWidth - twoColWidth) / 2));
+    bodyLines.push(rowToFull(A.map((c) => c.line1).join(sep)));
+    bodyLines.push(rowToFull(A.map((c) => c.line2).join(sep)));
+    bodyLines.push(rowToFull(''));
+    bodyLines.push(rowToFull(B.map((c) => c.line1).join(sep)));
+    bodyLines.push(rowToFull(B.map((c) => c.line2).join(sep)));
+    bodyLines.push(rowToFull(''));
+    bodyLines.push(rowToFull(' '.repeat(heroPad) + H.line1));
+    bodyLines.push(rowToFull(' '.repeat(heroPad) + H.line2));
+  }
 
   const contribLine =
     'Contributed this hand: ' + P.map((p) => `${p.name.split(' ')[0]}=${money(p.totalBet)}`).join('  ');
@@ -178,21 +278,17 @@ const render = () => {
   const legend =
     'Legend: D/SB/BB = Dealer/Small Blind/Big Blind · IN/FOLDED/ALL-IN/OUT · rnd = this street';
 
-  screen.textContent = [
-    hudTop,
-    hudMid,
-    hudBtm,
-    cTop,
-    cMid,
-    cBtm,
-    ...bodyLines,
-    '',
-    contribLine,
-    state,
-    legend,
-  ].join('\n');
+  const footer = [
+    ...wrapToWidth(contribLine, lineWidth),
+    ...wrapToWidth(state, lineWidth),
+    ...wrapToWidth(legend, lineWidth),
+  ];
+
+  screen.textContent = [...hud, ...community, ...bodyLines, '', ...footer].join('\n');
   updateControls();
 };
+
+window.addEventListener('resize', render, { passive: true });
 
 const updateControls = () => {
   const you = GAME.players[4];
