@@ -1,6 +1,8 @@
 import { money } from '../utils.js';
 import { isAlive, nextAliveFrom } from './table.js';
 
+// Clear street-level bets after each betting round; blinds + total contributions
+// stay intact until the pot is awarded.
 export const resetRoundBets = (state) => {
   state.players.forEach((player) => {
     player.roundBet = 0;
@@ -10,6 +12,9 @@ export const resetRoundBets = (state) => {
   state.lastRaiser = null;
 };
 
+// Mandatory blinds for Texas Hold'em. We walk clockwise from the dealer button
+// to find the next live small- and big-blind seats, then debit stacks and seed
+// the opening pot.
 export const postBlinds = (state, log) => {
   const dealer = state.dealer;
   const sbIndex = nextAliveFrom(state, dealer);
@@ -39,6 +44,7 @@ export const postBlinds = (state, log) => {
   log(`Blinds posted: ${sbPlayer.name} SB ${money(sbAmount)}, ${bbPlayer.name} BB ${money(bbAmount)}`);
 };
 
+// Straightforward action helpers, each mutating state and logging the move.
 export const actFold = (state, idx, log) => {
   const player = state.players[idx];
   player.folded = true;
@@ -50,6 +56,8 @@ export const actCheck = (state, idx, log) => {
   log(`${player.name} checks.`);
 };
 
+// Calling matches the current highest bet for this street. Short stacks get to
+// call for less, which later produces side pots.
 export const actCall = (state, idx, log) => {
   const player = state.players[idx];
   const toCall = Math.max(0, state.currentBet - player.roundBet);
@@ -61,6 +69,9 @@ export const actCall = (state, idx, log) => {
   log(`${player.name} ${toCall === 0 ? 'checks' : 'calls ' + money(pay)}.`);
 };
 
+// `raiseTo` mirrors live-play wording: target is the final contribution this
+// street, not the raise amount. We also enforce min-raises based on the last
+// increase to avoid infinite tiny bumps.
 export const actRaiseTo = (state, idx, raiseTo, log) => {
   const player = state.players[idx];
   raiseTo = Math.max(raiseTo, player.roundBet + 1);

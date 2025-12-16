@@ -3,6 +3,9 @@ import { aiAction } from './ai.js';
 import { actCall, actCheck, actFold, actRaiseTo } from './actions.js';
 import { isActive, nextIdx, onlyContender } from './table.js';
 
+// Build the acting order for a betting street starting from `startIdx`. We use
+// a queue so raises can restart action for everyone who has not yet matched the
+// new price.
 const buildQueue = (state, startIdx, skipIdx = null) => {
   const queue = [];
   const n = state.players.length;
@@ -16,6 +19,8 @@ const buildQueue = (state, startIdx, skipIdx = null) => {
   return queue;
 };
 
+// If everyone folds, award the pot immediately to the last aggressor/remaining
+// player—no showdown needed.
 const settleUncontested = (state, player, log) => {
   const pot = state.players.reduce((acc, p) => acc + p.totalBet, 0);
   player.stack += pot;
@@ -30,6 +35,8 @@ const settleUncontested = (state, player, log) => {
   log(`${player.name} wins uncontested pot ${money(pot)}.`);
 };
 
+// Core betting loop for each street. The loop exits early if action ends
+// uncontested or if we hit an emergency guard (sanity check for logic errors).
 export const bettingRound = async (state, startIndex, { render, waitHumanAction, log }) => {
   let queue = buildQueue(state, startIndex);
   let guard = 500;

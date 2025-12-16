@@ -1,3 +1,5 @@
+// Represents a seat at the table. Persona controls AI behaviour; humans share
+// the same interface but skip the AI logic path.
 export class Player {
   constructor(name, isAI, persona) {
     this.name = name;
@@ -12,6 +14,8 @@ export class Player {
     this.out = false;
   }
 
+  // Prepare the player for a new hand (Texas Hold'em resets private cards and
+  // street-level bets, but keeps stack + bust state).
   resetForHand() {
     this.hand = [];
     this.folded = false;

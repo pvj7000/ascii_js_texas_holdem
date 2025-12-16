@@ -3,6 +3,8 @@ import { Player } from './core/player.js';
 import { playHand, rotateDealer } from './core/gameFlow.js';
 import { createUI } from './ui/ui.js';
 
+// Initialise a fixed table: four AI personas plus the human in seat 5. Stacks
+// and blinds stay constant to keep the simulator focused on decision quality.
 const state = createGameState();
 state.players = [
   new Player('Player 1 (Rock)', true, 'rock'),
@@ -16,6 +18,8 @@ const ui = createUI(state);
 ui.render();
 ui.log('Welcome! You vs 4 computers. Starting stacks: $1000. Blinds: $10/$20.');
 
+// Endless loop of hands until the human busts. The UI exposes promises for user
+// actions so the async flow reads like procedural poker logic.
 (async function run() {
   while (true) {
     const keepGoing = await playHand(state, {
