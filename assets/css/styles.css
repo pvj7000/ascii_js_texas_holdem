@@ -96,12 +96,6 @@ button:hover:not([disabled]) {
   background: #122016;
 }
 
-.grow {
-  min-width: 110px;
-  justify-self: center;
-  width: clamp(120px, 18vw, 200px);
-}
-
 .controls .meta {
   grid-column: 1 / -1;
   text-align: center;
