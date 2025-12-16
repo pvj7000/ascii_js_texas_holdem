@@ -46,10 +46,6 @@ h1 {
 }
 
 .table-layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: stretch;
   width: 100%;
 }
 
