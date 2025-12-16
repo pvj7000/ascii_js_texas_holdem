@@ -43,6 +43,14 @@ A browser-based Texas Hold'em simulator rendered with ASCII terminal vibes. Play
 * **Hand evaluator:** Supports full 7-card evaluation with straight/flush edge cases and side-pot distribution.
 * **RNG:** Uses `crypto.getRandomValues` for shuffle integrity.
 
+## Fair shuffling & learning odds
+
+* **Accurate randomness:** Shuffling uses a Fisher–Yates pass where each swap index comes from `crypto.getRandomValues` (Web Crypto). That keeps all 52! permutations equally likely—no bias from `Math.random` or reused seeds.
+* **Probability study tool:** Because each hand is unbiased and the evaluator runs full 7-card comparisons, you can treat the simulator like a lightweight odds lab:
+  * Re-deal repeatedly on a street (e.g., click *Next Hand* preflop) to build intuition for how often certain starting hands make top pairs, draws, or premium holdings.
+  * Watch the log and on-board HUD to see pot odds and stack pressures in context; the AIs respond to position and strength, so you can observe how ranges tighten/loosen as community cards appear.
+  * Pause after the flop/turn and estimate your equity versus the field; then play out the hand to compare your guess with the showdown results to calibrate your reads.
+
 ## Notes
 
 * Tested in Chromium-based and Firefox browsers; mobile layout uses responsive CSS to keep the ASCII canvas readable.

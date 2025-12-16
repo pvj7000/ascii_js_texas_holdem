@@ -1,5 +1,7 @@
 import { RANK_VALUES } from './cards.js';
 
+// Hand evaluator tuned for 7-card Hold'em. Scores are tuples (`key`) where
+// higher comparisons win; `cat` is the category, followed by kicker values.
 const handCategoryNames = {
   9: 'Straight Flush',
   8: 'Four of a Kind',
@@ -26,6 +28,8 @@ export const compareScore = (a, b) => {
   return 0;
 };
 
+// Exact evaluator for 5 cards. Follows standard Hold'em ranking, including
+// wheel (A-5) straights and flush-first logic.
 export const eval5 = (cards) => {
   const clean = cards.filter((card) => card && typeof card.v === 'number' && card.s);
   if (clean.length !== 5) throw new Error('eval5 expects 5 cards');
@@ -146,6 +150,9 @@ export const eval5 = (cards) => {
   return { cat: 1, key: [1, ...highs], name: `High Card (${valueLabel(highs[0])} high)` };
 };
 
+// Enumerate the best 5-card hand from 6 or 7 available cards. For 7, we check
+// every combination of 5 (21 combos) which is feasible in-browser and keeps the
+// logic deterministic for teaching purposes.
 export const eval7 = (hole, board) => {
   const cards = hole.concat(board).filter(Boolean);
   const total = cards.length;

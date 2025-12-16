@@ -1,6 +1,9 @@
 import { money } from '../utils.js';
 import { compareScore, eval7 } from './evaluator.js';
 
+// Build a stack of main + side pots by looking at each unique contribution
+// level. Classic Hold'em side-pot logic: each pot contains everyone who has put
+// in at least that much.
 const buildPots = (state) => {
   const eligible = state.players.filter((player) => !player.out);
   const levels = [...new Set(eligible.map((player) => player.totalBet))]
@@ -18,6 +21,9 @@ const buildPots = (state) => {
   return pots;
 };
 
+// Award chips after the river. If no one is all-in we can simply pick the best
+// hand and split; otherwise we evaluate everyone once and distribute each
+// constructed side pot to the best eligible hand.
 export const showdown = (state, log) => {
   state.reveal = true;
   const alive = state.players.filter((player) => !player.folded && !player.out);
