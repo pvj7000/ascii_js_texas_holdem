@@ -176,14 +176,20 @@ const render = () => {
   const P = GAME.players;
   const n = P.length;
   const d = GAME.dealer;
-  const sb = (d + 1) % n;
-  const bb = (d + 2) % n;
-  const role = (i) => (i === d ? 'D' : i === sb ? 'SB' : i === bb ? 'BB' : ' ');
+  const sb = Number.isInteger(GAME.sbIdx) ? GAME.sbIdx : (d + 1) % n;
+  const bb = Number.isInteger(GAME.bbIdx) ? GAME.bbIdx : (d + 2) % n;
+  const role = (i) => {
+    const labels = [];
+    if (i === d) labels.push('D');
+    if (i === sb) labels.push('SB');
+    if (i === bb) labels.push('BB');
+    return labels.join(' ');
+  };
   const you = P[4];
   const toCall = Math.max(0, GAME.currentBet - you.roundBet);
   const status = (p) => (p.out ? 'OUT' : p.folded ? 'FOLDED' : p.allIn ? 'ALL-IN' : 'IN');
   const cardFace = (p) =>
-    p.folded
+    p.out || p.folded
       ? '[—] [—]'
       : p.isAI && !GAME.reveal
       ? '[###] [###]'
@@ -582,8 +588,19 @@ const resetRoundBets = () => {
 
 const postBlinds = () => {
   const d = GAME.dealer;
-  const sb = nextAliveFrom(d);
-  const bb = nextAliveFrom(sb);
+  const alive = GAME.players
+    .map((p, idx) => [p, idx])
+    .filter(([p]) => plAlive(p));
+  if (alive.length < 2) return;
+  let sb;
+  let bb;
+  if (alive.length === 2) {
+    sb = plAlive(GAME.players[d]) ? d : alive[0][1];
+    bb = nextAliveFrom(sb);
+  } else {
+    sb = nextAliveFrom(d);
+    bb = nextAliveFrom(sb);
+  }
   GAME.sbIdx = sb;
   GAME.bbIdx = bb;
   const PSB = GAME.players[sb];
@@ -797,7 +814,7 @@ const showdown = () => {
   const scores = new Map();
   for (const p of alive) scores.set(p, eval7(p.hand, GAME.board));
   const pots = buildPots();
-  for (const pot of pots) {
+  pots.forEach((pot, idx) => {
     if (pot.winners.length === 0) continue;
     let bestScore = null;
     let best = [];
@@ -812,16 +829,17 @@ const showdown = () => {
     }
     const share = Math.floor(pot.amount / best.length);
     let rem = pot.amount - share * best.length;
+    const potLabel = idx === 0 ? 'the pot' : 'a side pot';
     for (const w of best) {
       w.stack += share;
-      log(`${w.name} wins ${money(share)} from a side pot with ${scores.get(w).name}.`);
+      log(`${w.name} wins ${money(share)} from ${potLabel} with ${scores.get(w).name}.`);
       if (rem > 0) {
         w.stack += 1;
         rem--;
         log(`${w.name} receives +$1 (rounding).`);
       }
     }
-  }
+  });
   for (const p of GAME.players) p.totalBet = 0;
 };
 
