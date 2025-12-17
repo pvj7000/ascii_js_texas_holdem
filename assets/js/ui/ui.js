@@ -1,4 +1,5 @@
 import { clamp, money } from '../utils.js';
+import { isAlive, nextAliveFrom } from '../core/table.js';
 
 // Tiny DOM helper to keep the renderer readable.
 const qs = (selector) => document.querySelector(selector);
@@ -138,8 +139,14 @@ export const createUI = (state) => {
     const players = state.players;
     const n = players.length;
     const dealer = state.dealer;
-    const sb = (dealer + 1) % n;
-    const bb = (dealer + 2) % n;
+    const sb =
+      Number.isInteger(state.sbIdx) && isAlive(players[state.sbIdx])
+        ? state.sbIdx
+        : nextAliveFrom(state, dealer);
+    const bb =
+      Number.isInteger(state.bbIdx) && isAlive(players[state.bbIdx])
+        ? state.bbIdx
+        : nextAliveFrom(state, sb);
     const role = (i) => (i === dealer ? 'D' : i === sb ? 'SB' : i === bb ? 'BB' : ' ');
     const you = players[4];
     const toCall = Math.max(0, state.currentBet - you.roundBet);
