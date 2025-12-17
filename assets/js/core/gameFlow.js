@@ -90,9 +90,11 @@ export const playHand = async (state, deps) => {
   }
   resetRoundBets(state);
   state.street = 'showdown';
+  state.reveal = true;
   render();
   log('=== SHOWDOWN ===');
   showdown(state, log);
+  render();
   return true;
 };
 
