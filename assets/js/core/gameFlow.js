@@ -27,7 +27,11 @@ export const playHand = async (state, deps) => {
   state.burn = [];
   resetRoundBets(state);
   state.players.forEach((player) => {
-    if (player.stack === 0) player.out = true;
+    const wasOut = player.out;
+    if (player.stack === 0) {
+      player.out = true;
+      if (!wasOut && player.isAI) log(`${player.name} is out.`);
+    }
     if (!player.out) player.resetForHand();
   });
   const contenders = state.players.filter((player) => !player.out);

@@ -104,6 +104,40 @@ export const createUI = (state) => {
   const restartBtn = qs('#restartBtn');
   const info = qs('#info');
   raiseInput.value = state.bigBlind;
+  let humanActive = false;
+  let typingBuffer = '';
+
+  const minRaiseTarget = () => {
+    const you = state.players[4];
+    const baseMin = state.currentBet === 0 ? state.bigBlind : state.currentBet + Math.max(state.lastRaise, state.bigBlind);
+    return Math.max(baseMin, you.roundBet + 1);
+  };
+
+  const maxRaiseTarget = () => {
+    const you = state.players[4];
+    return you.roundBet + you.stack;
+  };
+
+  const normalizeRaiseValue = (value) => {
+    const minTo = minRaiseTarget();
+    const maxTo = Math.max(minTo, maxRaiseTarget());
+    let target = Math.floor(value / 10) * 10;
+    if (Number.isNaN(target)) target = minTo;
+    target = clamp(target, minTo, maxTo);
+    raiseInput.value = target;
+    return target;
+  };
+
+  const resetTypingBuffer = () => {
+    typingBuffer = '';
+  };
+
+  const appendDigitToRaise = (digit) => {
+    if (!humanActive || raiseInput.disabled) return;
+    typingBuffer += digit;
+    const numeric = Number.parseInt(typingBuffer, 10);
+    normalizeRaiseValue(Number.isNaN(numeric) ? minRaiseTarget() : numeric);
+  };
 
   // Log entries are prepended so the newest action is always visible on top.
   const log = (message) => {
@@ -117,6 +151,9 @@ export const createUI = (state) => {
     const you = state.players[4];
     const toCall = Math.max(0, state.currentBet - you.roundBet);
     const active = state.awaiting === 'human' && !you.folded && !you.allIn && !you.out;
+    const becameActive = active && !humanActive;
+    const becameInactive = !active && humanActive;
+    humanActive = active;
     foldBtn.disabled = !active;
     checkCallBtn.disabled = !active;
     raiseBtn.disabled = !active;
@@ -124,12 +161,19 @@ export const createUI = (state) => {
     checkCallBtn.textContent = toCall > 0 ? `Call ${money(Math.min(toCall, you.stack))}` : 'Check';
     const callNeedsAttention = active && toCall > 0;
     checkCallBtn.classList.toggle('call--alert', callNeedsAttention);
-    const minTo = state.currentBet === 0 ? state.bigBlind : state.currentBet + Math.max(state.lastRaise, state.bigBlind);
-    const maxTo = you.roundBet + you.stack;
-    raiseInput.min = Math.max(minTo, you.roundBet + 1);
-    raiseInput.max = Math.max(minTo, maxTo);
+    const minTo = minRaiseTarget();
+    const maxTo = Math.max(minTo, maxRaiseTarget());
+    raiseInput.min = minTo;
+    raiseInput.max = maxTo;
     raiseInput.step = 10;
-    if (+raiseInput.value < raiseInput.min) raiseInput.value = raiseInput.min;
+    normalizeRaiseValue(Number(raiseInput.value) || minTo);
+    if (becameActive) {
+      resetTypingBuffer();
+      raiseInput.focus();
+      raiseInput.select();
+    } else if (becameInactive) {
+      resetTypingBuffer();
+    }
     info.textContent = active
       ? `To call: ${money(toCall)} · Min raise-to: ${money(+raiseInput.min)} · You: ${money(you.stack)}`
       : 'Waiting for players...';
@@ -272,6 +316,8 @@ export const createUI = (state) => {
     if (!humanResolve) return;
     const resolver = humanResolve;
     humanResolve = null;
+    resetTypingBuffer();
+    humanActive = false;
     resolver(payload);
   };
 
@@ -281,25 +327,45 @@ export const createUI = (state) => {
       updateControls();
     });
 
-  foldBtn.addEventListener('click', () => {
-    if (state.awaiting === 'human') resolveHuman({ type: 'fold' });
-  });
-  checkCallBtn.addEventListener('click', () => {
-    if (state.awaiting === 'human') {
-      const you = state.players[4];
-      const toCall = Math.max(0, state.currentBet - you.roundBet);
-      resolveHuman(toCall > 0 ? { type: 'call' } : { type: 'check' });
+  const handleFold = () => {
+    if (state.awaiting !== 'human' || foldBtn.disabled) return;
+    resolveHuman({ type: 'fold' });
+  };
+
+  const handleCheckOrCall = () => {
+    if (state.awaiting !== 'human' || checkCallBtn.disabled) return;
+    const you = state.players[4];
+    const toCall = Math.max(0, state.currentBet - you.roundBet);
+    resolveHuman(toCall > 0 ? { type: 'call' } : { type: 'check' });
+  };
+
+  const handleRaise = () => {
+    if (state.awaiting !== 'human' || raiseBtn.disabled) return;
+    const target = normalizeRaiseValue(Number(raiseInput.value));
+    resolveHuman({ type: 'raiseTo', amount: target });
+  };
+
+  foldBtn.addEventListener('click', handleFold);
+  checkCallBtn.addEventListener('click', handleCheckOrCall);
+  raiseBtn.addEventListener('click', handleRaise);
+
+  document.addEventListener('keydown', (event) => {
+    if (!humanActive) return;
+    const key = event.key.toLowerCase();
+    if (key >= '0' && key <= '9') {
+      event.preventDefault();
+      appendDigitToRaise(key);
+      return;
     }
-  });
-  raiseBtn.addEventListener('click', () => {
-    if (state.awaiting === 'human') {
-      const you = state.players[4];
-      let target = Math.floor(+raiseInput.value / 10) * 10;
-      if (Number.isNaN(target)) return;
-      const minTo = state.currentBet === 0 ? state.bigBlind : state.currentBet + Math.max(state.lastRaise, state.bigBlind);
-      target = clamp(target, Math.max(minTo, you.roundBet + 1), you.roundBet + you.stack);
-      raiseInput.value = target;
-      resolveHuman({ type: 'raiseTo', amount: target });
+    if (key === 'enter') {
+      event.preventDefault();
+      handleRaise();
+    } else if (key === 'c') {
+      event.preventDefault();
+      handleCheckOrCall();
+    } else if (key === 'f') {
+      event.preventDefault();
+      handleFold();
     }
   });
 
