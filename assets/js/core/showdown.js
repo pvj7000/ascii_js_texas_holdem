@@ -1,4 +1,4 @@
-import { money } from '../utils.js';
+import { money, winVerb } from '../utils.js';
 import { compareScore, eval7 } from './evaluator.js';
 
 // Build a stack of main + side pots by looking at each unique contribution
@@ -47,7 +47,7 @@ export const showdown = (state, log) => {
     let remainder = potAmount - share * bestPlayers.length;
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${player.name} wins ${money(share)} with ${scores.get(player).name}.`);
+      log(`${player.name} ${winVerb(player.name)} ${money(share)} with ${scores.get(player).name}.`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
@@ -79,7 +79,7 @@ export const showdown = (state, log) => {
     let remainder = pot.amount - share * bestPlayers.length;
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${player.name} wins ${money(share)} from a side pot with ${scores.get(player).name}.`);
+      log(`${player.name} ${winVerb(player.name)} ${money(share)} from a side pot with ${scores.get(player).name}.`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;

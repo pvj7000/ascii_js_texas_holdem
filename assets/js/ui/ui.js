@@ -122,6 +122,8 @@ export const createUI = (state) => {
     raiseBtn.disabled = !active;
     raiseInput.disabled = !active;
     checkCallBtn.textContent = toCall > 0 ? `Call ${money(Math.min(toCall, you.stack))}` : 'Check';
+    const callNeedsAttention = active && toCall > 0;
+    checkCallBtn.classList.toggle('call--alert', callNeedsAttention);
     const minTo = state.currentBet === 0 ? state.bigBlind : state.currentBet + Math.max(state.lastRaise, state.bigBlind);
     const maxTo = you.roundBet + you.stack;
     raiseInput.min = Math.max(minTo, you.roundBet + 1);
@@ -334,6 +336,10 @@ export const createUI = (state) => {
     if (!enabled) setNextHandAttention(false);
   };
 
+  const setNextHandLabel = (label) => {
+    nextHandBtn.textContent = label;
+  };
+
   const showRestart = (show) => {
     restartBtn.hidden = !show;
   };
@@ -347,6 +353,7 @@ export const createUI = (state) => {
     waitForNextHand,
     waitForRestart,
     setNextHandEnabled,
+    setNextHandLabel,
     showRestart,
     updateControls,
   };

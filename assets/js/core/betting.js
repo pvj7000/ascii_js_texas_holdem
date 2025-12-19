@@ -1,4 +1,4 @@
-import { money, sleep } from '../utils.js';
+import { money, sleep, winVerb } from '../utils.js';
 import { aiAction } from './ai.js';
 import { actCall, actCheck, actFold, actRaiseTo } from './actions.js';
 import { isActive, nextIdx, onlyContender } from './table.js';
@@ -32,7 +32,7 @@ const settleUncontested = (state, player, log) => {
   state.lastRaiser = null;
   state.current = null;
   state.awaiting = null;
-  log(`${player.name} wins uncontested pot ${money(pot)}.`);
+  log(`${player.name} ${winVerb(player.name)} uncontested pot ${money(pot)}.`);
 };
 
 // Core betting loop for each street. The loop exits early if action ends

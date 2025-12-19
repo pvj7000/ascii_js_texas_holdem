@@ -13,6 +13,9 @@ export const randInt = (limit) => {
   return Number(buf[0] % limit);
 };
 
+// Grammar helper so the human's win messages read naturally.
+export const winVerb = (name) => (name === 'You' ? 'win' : 'wins');
+
 // Small helper to pause async flows; keeps AI actions readable without busy
 // waits.
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
