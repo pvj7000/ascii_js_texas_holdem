@@ -154,7 +154,7 @@ export const createUI = (state) => {
     const toCall = Math.max(0, state.currentBet - you.roundBet);
     const status = (player) => (player.out ? 'OUT' : player.folded ? 'FOLDED' : player.allIn ? 'ALL-IN' : 'IN');
     const cardFace = (player) =>
-      player.folded
+      player.folded || player.out
         ? '[—] [—]'
         : player.isAI && !state.reveal
         ? '[###] [###]'
