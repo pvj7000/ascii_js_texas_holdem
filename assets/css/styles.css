@@ -162,6 +162,9 @@ button:hover:not([disabled]) {
 pre#screen .card {
   color: var(--accent);
   text-shadow: 0 0 6px rgba(101, 255, 101, 0.35);
+  font-size: 1.5rem;
+  position: relative;
+  top: 3px;
 }
 
 pre#screen .card.card--hearts,
