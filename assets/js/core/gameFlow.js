@@ -33,7 +33,9 @@ export const playHand = async (state, deps) => {
   const contenders = state.players.filter((player) => !player.out);
   if (contenders.length <= 1) {
     render();
-    log(`Game over. Winner: ${contenders[0]?.name || 'Nobody'}.`);
+    const sole = contenders[0];
+    if (sole?.name === 'You') log('Congratulations! You won the game.');
+    else log(`Game over. Winner: ${sole?.name || 'Nobody'}.`);
     return false;
   }
   state.deck = new Deck();

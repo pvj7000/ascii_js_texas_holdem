@@ -143,6 +143,16 @@ button:hover:not([disabled]) {
   background: #122016;
 }
 
+.call--alert {
+  background: var(--fg);
+  color: #0f1911;
+  border-color: #0f1911;
+}
+
+.call--alert:hover:not([disabled]) {
+  background: var(--fg);
+}
+
 .controls .meta {
   grid-column: 1 / -1;
   text-align: center;
