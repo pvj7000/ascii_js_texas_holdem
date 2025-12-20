@@ -66,7 +66,15 @@ export const actCall = (state, idx, log) => {
   player.roundBet += pay;
   player.totalBet += pay;
   if (player.stack === 0) player.allIn = true;
-  log(`${player.name} ${toCall === 0 ? 'checks' : 'calls ' + money(pay)}.`);
+  if (toCall === 0) {
+    log(`${player.name} checks.`);
+  } else {
+    const callNote = player.stack === 0 ? ' (all-in short)' : '';
+    log(`${player.name} calls ${money(pay)} to ${money(player.roundBet)} total${callNote}.`);
+  }
+  if (player.allIn) {
+    log(`${player.name} is all-in (${money(player.roundBet)} total this street).`);
+  }
 };
 
 // `raiseTo` mirrors live-play wording: target is the final contribution this
@@ -87,13 +95,14 @@ export const actRaiseTo = (state, idx, raiseTo, log) => {
     state.currentBet = player.roundBet;
     state.lastRaiser = idx;
     const verb = state.street === 'preflop' && player.roundBet <= state.bigBlind ? 'bets' : 'raises';
-    log(`${player.name} ${verb} to ${money(player.roundBet)}.`);
+    log(`${player.name} ${verb} to ${money(player.roundBet)} total.`);
   } else {
     const paid = player.roundBet - prevBet;
-    log(`${player.name} calls ${money(paid)} (all-in short).`);
+    const callNote = player.stack === 0 ? ' (all-in short)' : '';
+    log(`${player.name} calls ${money(paid)} to ${money(player.roundBet)} total${callNote}.`);
   }
   if (player.stack === 0) {
     player.allIn = true;
-    log(`${player.name} is all-in (${money(player.roundBet)} in this street).`);
+    log(`${player.name} is all-in (${money(player.roundBet)} total this street).`);
   }
 };

@@ -1,5 +1,5 @@
 import { money } from '../utils.js';
-import { compareScore, eval7 } from './evaluator.js';
+import { compareScore, eval7, formatScore } from './evaluator.js';
 
 // Build a stack of main + side pots by looking at each unique contribution
 // level. Classic Hold'em side-pot logic: each pot contains everyone who has put
@@ -26,6 +26,13 @@ const buildPots = (state) => {
 // constructed side pot to the best eligible hand.
 export const showdown = (state, log) => {
   state.reveal = true;
+  const showdownLine = state.players
+    .filter((player) => !player.folded && !player.out)
+    .map((player) => {
+      const cards = player.hand.map((card) => card.toString(true).slice(1, -1)).join(' ');
+      return `${player.name} [${cards}]`;
+    });
+  if (showdownLine.length > 0) log(`Showdown cards: ${showdownLine.join(', ')}`);
   const alive = state.players.filter((player) => !player.folded && !player.out);
   const potAmount = state.players.reduce((acc, player) => acc + player.totalBet, 0);
   const anyAllIn = state.players.some((player) => player.allIn);
@@ -48,7 +55,7 @@ export const showdown = (state, log) => {
     const potName = 'MAIN POT';
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${player.name} wins ${potName} (${money(potAmount)}) with ${scores.get(player).name} (${money(share)}).`);
+      log(`${potName} (${money(potAmount)}): won by ${player.name} (${money(share)}) with ${formatScore(scores.get(player))}.`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
