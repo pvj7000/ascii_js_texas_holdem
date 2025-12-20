@@ -64,9 +64,11 @@ export const showdown = (state, log) => {
   for (const player of alive) scores.set(player, eval7(player.hand, state.board));
   const pots = buildPots(state);
   pots.forEach((pot, idx) => {
-    if (pot.winners.length === 0) continue;
+    if (pot.winners.length === 0) return;
+  
     let bestScore = null;
     let bestPlayers = [];
+  
     for (const player of pot.winners) {
       const score = scores.get(player) || eval7(player.hand, state.board);
       if (!bestScore || compareScore(score, bestScore) > 0) {
@@ -76,9 +78,11 @@ export const showdown = (state, log) => {
         bestPlayers.push(player);
       }
     }
+  
     const share = Math.floor(pot.amount / bestPlayers.length || 1);
     let remainder = pot.amount - share * bestPlayers.length;
     const potName = idx === 0 ? 'MAIN POT' : `SIDE POT #${idx}`;
+  
     for (const player of bestPlayers) {
       player.stack += share;
       log(`${potName} (${money(pot.amount)}): won by ${player.name} (${money(share)}) with ${scores.get(player).name}.`);
@@ -89,6 +93,7 @@ export const showdown = (state, log) => {
       }
     }
   });
+
   state.players.forEach((player) => {
     player.totalBet = 0;
   });
