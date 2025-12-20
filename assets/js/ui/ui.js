@@ -103,9 +103,15 @@ export const createUI = (state) => {
   const nextHandBtn = qs('#nextHandBtn');
   const restartBtn = qs('#restartBtn');
   const info = qs('#info');
-  raiseInput.value = state.bigBlind;
+  raiseInput.value = '100';
   let humanActive = false;
-  let typingBuffer = '';
+  let lastStreetForRaise = null;
+
+  const parseNumericValue = (raw) => {
+    const cleaned = String(raw ?? '').replace(/[^\d]/g, '');
+    const numeric = Number.parseInt(cleaned, 10);
+    return Number.isNaN(numeric) ? null : numeric;
+  };
 
   const minRaiseTarget = () => {
     const you = state.players[4];
@@ -121,22 +127,11 @@ export const createUI = (state) => {
   const normalizeRaiseValue = (value) => {
     const minTo = minRaiseTarget();
     const maxTo = Math.max(minTo, maxRaiseTarget());
-    let target = Math.floor(value / 10) * 10;
-    if (Number.isNaN(target)) target = minTo;
+    const parsed = parseNumericValue(value);
+    let target = parsed === null ? minTo : Math.floor(parsed / 10) * 10;
     target = clamp(target, minTo, maxTo);
     raiseInput.value = target;
     return target;
-  };
-
-  const resetTypingBuffer = () => {
-    typingBuffer = '';
-  };
-
-  const appendDigitToRaise = (digit) => {
-    if (!humanActive || raiseInput.disabled) return;
-    typingBuffer += digit;
-    const numeric = Number.parseInt(typingBuffer, 10);
-    normalizeRaiseValue(Number.isNaN(numeric) ? minRaiseTarget() : numeric);
   };
 
   // Log entries are prepended so the newest action is always visible on top.
@@ -152,13 +147,12 @@ export const createUI = (state) => {
     const toCall = Math.max(0, state.currentBet - you.roundBet);
     const active = state.awaiting === 'human' && !you.folded && !you.allIn && !you.out;
     const becameActive = active && !humanActive;
-    const becameInactive = !active && humanActive;
     humanActive = active;
     foldBtn.disabled = !active;
     checkCallBtn.disabled = !active;
     raiseBtn.disabled = !active;
     raiseInput.disabled = !active;
-    checkCallBtn.textContent = toCall > 0 ? `Call ${money(Math.min(toCall, you.stack))}` : 'Check';
+    checkCallBtn.textContent = toCall > 0 ? `[C] Call ${money(Math.min(toCall, you.stack))}` : '[C] Check';
     const callNeedsAttention = active && toCall > 0;
     checkCallBtn.classList.toggle('call--alert', callNeedsAttention);
     const minTo = minRaiseTarget();
@@ -166,13 +160,10 @@ export const createUI = (state) => {
     raiseInput.min = minTo;
     raiseInput.max = maxTo;
     raiseInput.step = 10;
-    normalizeRaiseValue(Number(raiseInput.value) || minTo);
+    normalizeRaiseValue(raiseInput.value || minTo);
     if (becameActive) {
-      resetTypingBuffer();
       raiseInput.focus();
       raiseInput.select();
-    } else if (becameInactive) {
-      resetTypingBuffer();
     }
     info.textContent = active
       ? `To call: ${money(toCall)} · Min raise-to: ${money(+raiseInput.min)} · You: ${money(you.stack)}`
@@ -182,6 +173,11 @@ export const createUI = (state) => {
   // Render the ASCII table + HUD. We mirror live Hold'em: pot and call info up
   // top, community board in the middle, seats around the bottom.
   const render = () => {
+    if (state.street !== lastStreetForRaise) {
+      lastStreetForRaise = state.street;
+      raiseInput.value = '100';
+      normalizeRaiseValue(raiseInput.value);
+    }
     const players = state.players;
     const n = players.length;
     const dealer = state.dealer;
@@ -316,7 +312,6 @@ export const createUI = (state) => {
     if (!humanResolve) return;
     const resolver = humanResolve;
     humanResolve = null;
-    resetTypingBuffer();
     humanActive = false;
     resolver(payload);
   };
@@ -341,7 +336,7 @@ export const createUI = (state) => {
 
   const handleRaise = () => {
     if (state.awaiting !== 'human' || raiseBtn.disabled) return;
-    const target = normalizeRaiseValue(Number(raiseInput.value));
+    const target = normalizeRaiseValue(raiseInput.value);
     resolveHuman({ type: 'raiseTo', amount: target });
   };
 
@@ -352,15 +347,7 @@ export const createUI = (state) => {
   document.addEventListener('keydown', (event) => {
     if (!humanActive) return;
     const key = event.key.toLowerCase();
-    if (key >= '0' && key <= '9') {
-      event.preventDefault();
-      appendDigitToRaise(key);
-      return;
-    }
-    if (key === 'enter') {
-      event.preventDefault();
-      handleRaise();
-    } else if (key === 'c') {
+    if (key === 'c') {
       event.preventDefault();
       handleCheckOrCall();
     } else if (key === 'f') {

@@ -13,16 +13,15 @@
         <pre id="screen" aria-label="ASCII canvas"></pre>
         <div class="side-panel">
           <div class="controls" id="controls">
-            <button id="foldBtn">Fold</button>
-            <button id="checkCallBtn">Check/Call</button>
+            <button id="foldBtn">[F] Fold</button>
+            <button id="checkCallBtn">[C] Check/Call</button>
             <button id="raiseBtn">Bet/Raise</button>
             <input
               class="grow"
               id="raiseAmount"
-              type="number"
-              min="20"
-              step="10"
-              value="20"
+              type="text"
+              inputmode="numeric"
+              value="100"
               aria-label="Bet/Raise amount"
             />
             <button id="nextHandBtn" disabled>Next Hand</button>

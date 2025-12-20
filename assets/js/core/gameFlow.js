@@ -15,6 +15,18 @@ const dealPrivateCards = (state) => {
   }
 };
 
+// Tag players who have busted so they skip future hands. We log only for AI
+// seats to mirror table chatter without duplicating the human restart prompt.
+const markBustedPlayers = (state, log) => {
+  state.players.forEach((player) => {
+    const becameOut = !player.out && player.stack <= 0;
+    if (becameOut) {
+      player.out = true;
+      if (player.isAI) log(`${player.name} is out.`);
+    }
+  });
+};
+
 // One complete hand flow: reset stacks, shuffle, deal, run betting rounds
 // through river, then showdown. Returns `false` to stop the game loop when only
 // one player remains.
@@ -27,11 +39,7 @@ export const playHand = async (state, deps) => {
   state.burn = [];
   resetRoundBets(state);
   state.players.forEach((player) => {
-    const wasOut = player.out;
-    if (player.stack === 0) {
-      player.out = true;
-      if (!wasOut && player.isAI) log(`${player.name} is out.`);
-    }
+    if (player.stack === 0) player.out = true;
     if (!player.out) player.resetForHand();
   });
   const contenders = state.players.filter((player) => !player.out);
@@ -54,6 +62,7 @@ export const playHand = async (state, deps) => {
   if (br1 === 'ended') {
     resetRoundBets(state);
     state.reveal = false;
+    markBustedPlayers(state, log);
     return true;
   }
   resetRoundBets(state);
@@ -66,6 +75,7 @@ export const playHand = async (state, deps) => {
   if (br2 === 'ended') {
     resetRoundBets(state);
     state.reveal = false;
+    markBustedPlayers(state, log);
     return true;
   }
   resetRoundBets(state);
@@ -79,6 +89,7 @@ export const playHand = async (state, deps) => {
   if (br3 === 'ended') {
     resetRoundBets(state);
     state.reveal = false;
+    markBustedPlayers(state, log);
     return true;
   }
   resetRoundBets(state);
@@ -92,6 +103,7 @@ export const playHand = async (state, deps) => {
   if (br4 === 'ended') {
     resetRoundBets(state);
     state.reveal = false;
+    markBustedPlayers(state, log);
     return true;
   }
   resetRoundBets(state);
@@ -101,6 +113,7 @@ export const playHand = async (state, deps) => {
   log('=== SHOWDOWN ===');
   showdown(state, log);
   render();
+  markBustedPlayers(state, log);
   return true;
 };
 
