@@ -46,6 +46,79 @@ const kickerText = (kickers) => {
   return ` (${labels.slice(0, -1).join(', ')} and ${labels.at(-1)} kickers)`;
 };
 
+const rankSymbol = (value) =>
+  ({
+    14: 'A',
+    13: 'K',
+    12: 'Q',
+    11: 'J',
+    10: 'T',
+    9: '9',
+    8: '8',
+    7: '7',
+    6: '6',
+    5: '5',
+    4: '4',
+    3: '3',
+    2: '2',
+  }[value] || String(value));
+
+const hyphenSymbols = (values) => values.filter((v) => Number.isFinite(v)).map(rankSymbol).join('-');
+
+const kickerSummary = (kickers) => {
+  if (!kickers.length) return '';
+  const symbols = hyphenSymbols(kickers);
+  if (!symbols) return '';
+  return `${symbols} kicker${kickers.length === 1 ? '' : 's'}`;
+};
+
+export const formatScore = (score) => {
+  if (!score || typeof score.cat !== 'number' || !Array.isArray(score.key)) return '';
+  const [, ...parts] = score.key;
+  switch (score.cat) {
+    case 9: {
+      const high = parts[0];
+      return `Straight Flush (${rankSymbol(high)}-high)`;
+    }
+    case 8: {
+      const [quad, kicker] = parts;
+      const kickerText = kickerSummary(kicker ? [kicker] : []);
+      return `Four of a Kind (${pluralRankName(quad)}${kickerText ? `, ${kickerText}` : ''})`;
+    }
+    case 7: {
+      const [trips, pair] = parts;
+      return `Full House (${pluralRankName(trips)} full of ${pluralRankName(pair)})`;
+    }
+    case 6: {
+      return `Flush (${hyphenSymbols(parts)})`;
+    }
+    case 5: {
+      const high = parts[0];
+      return `Straight (${rankSymbol(high)}-high)`;
+    }
+    case 4: {
+      const [trips, ...kickers] = parts;
+      const kickerText = kickerSummary(kickers);
+      return `Three of a Kind (${pluralRankName(trips)}${kickerText ? `, ${kickerText}` : ''})`;
+    }
+    case 3: {
+      const [highPair, lowPair, kicker] = parts;
+      const kickerText = kickerSummary(kicker ? [kicker] : []);
+      return `Two Pair (${pluralRankName(highPair)} and ${pluralRankName(lowPair)}${kickerText ? `, ${kickerText}` : ''})`;
+    }
+    case 2: {
+      const [pair, ...kickers] = parts;
+      const kickerText = kickerSummary(kickers);
+      return `One Pair (${pluralRankName(pair)}${kickerText ? `, ${kickerText}` : ''})`;
+    }
+    case 1: {
+      return `High Card (${hyphenSymbols(parts)})`;
+    }
+    default:
+      return score.name || '';
+  }
+};
+
 export const compareScore = (a, b) => {
   for (let i = 0; i < Math.max(a.key.length, b.key.length); i++) {
     const left = a.key[i] || 0;
