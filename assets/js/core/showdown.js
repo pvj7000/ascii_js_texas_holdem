@@ -26,6 +26,19 @@ const buildPots = (state) => {
 // constructed side pot to the best eligible hand.
 export const showdown = (state, log) => {
   state.reveal = true;
+  const pots = buildPots(state);
+  const hasSidePots = pots.length > 1;
+  if (hasSidePots) {
+    const allIns = state.players.filter((player) => player.allIn && !player.out);
+    if (allIns.length === 1) {
+      log(`Side pots created due to all-in by ${allIns[0].name}.`);
+    } else if (allIns.length > 1) {
+      const names = allIns.map((p) => p.name);
+      const last = names[names.length - 1];
+      const list = names.length === 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${last}`;
+      log(`Side pots created due to all-ins by ${list}.`);
+    }
+  }
   const showdownLine = state.players
     .filter((player) => !player.folded && !player.out)
     .map((player) => {
@@ -55,7 +68,8 @@ export const showdown = (state, log) => {
     const potName = 'MAIN POT';
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${potName} (${money(potAmount)}): won by ${player.name} (${money(share)}) with ${formatScore(scores.get(player))}.`);
+      const splitNote = bestPlayers.length > 1 ? ` [${money(share)} each]` : '';
+      log(`${player.name} wins ${potName} (${money(potAmount)})${splitNote} with ${formatScore(scores.get(player))}`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
@@ -69,7 +83,6 @@ export const showdown = (state, log) => {
   }
   const scores = new Map();
   for (const player of alive) scores.set(player, eval7(player.hand, state.board));
-  const pots = buildPots(state);
   pots.forEach((pot, idx) => {
     if (pot.winners.length === 0) return;
   
@@ -92,7 +105,8 @@ export const showdown = (state, log) => {
 
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${player.name} wins ${potName} (${money(pot.amount)}) with ${scores.get(player).name} (${money(share)}).`);
+      const splitNote = bestPlayers.length > 1 ? ` [${money(share)} each]` : '';
+      log(`${player.name} wins ${potName} (${money(pot.amount)})${splitNote} with ${formatScore(scores.get(player))}`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;

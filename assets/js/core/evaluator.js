@@ -65,12 +65,7 @@ const rankSymbol = (value) =>
 
 const hyphenSymbols = (values) => values.filter((v) => Number.isFinite(v)).map(rankSymbol).join('-');
 
-const kickerSummary = (kickers) => {
-  if (!kickers.length) return '';
-  const symbols = hyphenSymbols(kickers);
-  if (!symbols) return '';
-  return `${symbols} kicker${kickers.length === 1 ? '' : 's'}`;
-};
+const pluralRankCompact = (value) => pluralRankName(value);
 
 export const formatScore = (score) => {
   if (!score || typeof score.cat !== 'number' || !Array.isArray(score.key)) return '';
@@ -81,13 +76,12 @@ export const formatScore = (score) => {
       return `Straight Flush (${rankSymbol(high)}-high)`;
     }
     case 8: {
-      const [quad, kicker] = parts;
-      const kickerText = kickerSummary(kicker ? [kicker] : []);
-      return `Four of a Kind (${pluralRankName(quad)}${kickerText ? `, ${kickerText}` : ''})`;
+      const [quad] = parts;
+      return `Four of a Kind (${pluralRankCompact(quad)})`;
     }
     case 7: {
       const [trips, pair] = parts;
-      return `Full House (${pluralRankName(trips)} full of ${pluralRankName(pair)})`;
+      return `Full House (${pluralRankCompact(trips)} over ${pluralRankCompact(pair)})`;
     }
     case 6: {
       return `Flush (${hyphenSymbols(parts)})`;
@@ -97,19 +91,19 @@ export const formatScore = (score) => {
       return `Straight (${rankSymbol(high)}-high)`;
     }
     case 4: {
-      const [trips, ...kickers] = parts;
-      const kickerText = kickerSummary(kickers);
-      return `Three of a Kind (${pluralRankName(trips)}${kickerText ? `, ${kickerText}` : ''})`;
+      const [trips] = parts;
+      return `Three of a Kind (${pluralRankCompact(trips)})`;
     }
     case 3: {
       const [highPair, lowPair, kicker] = parts;
-      const kickerText = kickerSummary(kicker ? [kicker] : []);
-      return `Two Pair (${pluralRankName(highPair)} and ${pluralRankName(lowPair)}${kickerText ? `, ${kickerText}` : ''})`;
+      const kickerText = kicker ? `, ${rankName(kicker)} kicker` : '';
+      return `Two Pair (${pluralRankCompact(highPair)} and ${pluralRankCompact(lowPair)}${kickerText})`;
     }
     case 2: {
       const [pair, ...kickers] = parts;
-      const kickerText = kickerSummary(kickers);
-      return `One Pair (${pluralRankName(pair)}${kickerText ? `, ${kickerText}` : ''})`;
+      const kickerSymbols = kickers.length ? hyphenSymbols(kickers) : '';
+      const kickerText = kickerSymbols ? `, ${kickerSymbols} kickers` : '';
+      return `One Pair (${pluralRankCompact(pair)}${kickerText})`;
     }
     case 1: {
       return `High Card (${hyphenSymbols(parts)})`;

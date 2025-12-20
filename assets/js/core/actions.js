@@ -94,8 +94,7 @@ export const actRaiseTo = (state, idx, raiseTo, log) => {
     state.lastRaise = player.roundBet - state.currentBet;
     state.currentBet = player.roundBet;
     state.lastRaiser = idx;
-    const verb = state.street === 'preflop' && player.roundBet <= state.bigBlind ? 'bets' : 'raises';
-    log(`${player.name} ${verb} to ${money(player.roundBet)} total.`);
+    log(`${player.name} raises to ${money(player.roundBet)} total.`);
   } else {
     const paid = player.roundBet - prevBet;
     const callNote = player.stack === 0 ? ' (all-in short)' : '';
