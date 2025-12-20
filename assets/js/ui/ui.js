@@ -324,7 +324,7 @@ export const createUI = (state) => {
 
   const handleFold = () => {
     if (state.awaiting !== 'human' || foldBtn.disabled) return;
-    resolveHuman({ type: '[F] fold' });
+    resolveHuman({ type: 'fold' });
   };
 
   const handleCheckOrCall = () => {
