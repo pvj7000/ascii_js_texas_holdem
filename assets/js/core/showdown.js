@@ -89,10 +89,10 @@ export const showdown = (state, log) => {
     const share = Math.floor(pot.amount / bestPlayers.length || 1);
     let remainder = pot.amount - share * bestPlayers.length;
     const potName = idx === 0 ? 'MAIN POT' : `SIDE POT #${idx}`;
-  
+
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${potName} (${money(pot.amount)}): won by ${player.name} (${money(share)}) with ${formatScore(scores.get(player))}.`);
+      log(`${player.name} wins ${potName} (${money(pot.amount)}) with ${scores.get(player).name} (${money(share)}).`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
