@@ -1,3 +1,4 @@
+import { money } from '../utils.js';
 import { Deck } from './cards.js';
 import { resetRoundBets, postBlinds } from './actions.js';
 import { bettingRound } from './betting.js';
@@ -50,6 +51,13 @@ export const playHand = async (state, deps) => {
     else log(`Game over. Winner: ${sole?.name || 'Nobody'}.`);
     return false;
   }
+  log(
+    [
+      '========== NEW HAND ==========',
+      `Blinds: SB ${money(state.smallBlind)} / BB ${money(state.bigBlind)}`,
+      `Hand #${state.handNum}`,
+    ].join('\n'),
+  );
   state.deck = new Deck();
   state.deck.shuffle();
   dealPrivateCards(state);
@@ -70,7 +78,7 @@ export const playHand = async (state, deps) => {
   state.board.push(state.deck.deal(), state.deck.deal(), state.deck.deal());
   state.street = 'flop';
   render();
-  log(`=== FLOP: ${state.board.slice(0, 3).map((card) => card.toString(true)).join(' ')} ===`);
+  log(`=== FLOP === ${state.board.slice(0, 3).map((card) => card.toString(true)).join(' ')}`);
   const br2 = await bettingRound(state, nextIdx(state, state.dealer), depsForRound);
   if (br2 === 'ended') {
     resetRoundBets(state);
@@ -84,7 +92,7 @@ export const playHand = async (state, deps) => {
   state.board.push(turnCard);
   state.street = 'turn';
   render();
-  log(`=== TURN: ${turnCard.toString(true)}  | Board: ${state.board.map((card) => card.toString(true)).join(' ')} ===`);
+  log(`=== TURN === ${turnCard.toString(true)} | Board: ${state.board.map((card) => card.toString(true)).join(' ')}`);
   const br3 = await bettingRound(state, nextIdx(state, state.dealer), depsForRound);
   if (br3 === 'ended') {
     resetRoundBets(state);
@@ -98,7 +106,7 @@ export const playHand = async (state, deps) => {
   state.board.push(riverCard);
   state.street = 'river';
   render();
-  log(`=== RIVER: ${riverCard.toString(true)}  | Board: ${state.board.map((card) => card.toString(true)).join(' ')} ===`);
+  log(`=== RIVER === ${riverCard.toString(true)} | Board: ${state.board.map((card) => card.toString(true)).join(' ')}`);
   const br4 = await bettingRound(state, nextIdx(state, state.dealer), depsForRound);
   if (br4 === 'ended') {
     resetRoundBets(state);
