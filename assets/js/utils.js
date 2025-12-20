@@ -13,8 +13,13 @@ export const randInt = (limit) => {
   return Number(buf[0] % limit);
 };
 
+// Conjugate verbs so the human's messages read naturally.
+export const verb = (name, youForm, otherForm) => (name === 'You' ? youForm : otherForm);
+export const simpleVerb = (name, base) => verb(name, base, `${base}s`);
+export const beVerb = (name) => verb(name, 'are', 'is');
+
 // Grammar helper so the human's win messages read naturally.
-export const winVerb = (name) => (name === 'You' ? 'win' : 'wins');
+export const winVerb = (name) => simpleVerb(name, 'win');
 
 // Small helper to pause async flows; keeps AI actions readable without busy
 // waits.

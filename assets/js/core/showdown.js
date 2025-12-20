@@ -1,4 +1,4 @@
-import { money } from '../utils.js';
+import { money, simpleVerb, winVerb } from '../utils.js';
 import { compareScore, eval7, formatScore } from './evaluator.js';
 
 // Build a stack of main + side pots by looking at each unique contribution
@@ -69,11 +69,11 @@ export const showdown = (state, log) => {
     for (const player of bestPlayers) {
       player.stack += share;
       const splitNote = bestPlayers.length > 1 ? ` [${money(share)} each]` : '';
-      log(`${player.name} wins ${potName} (${money(potAmount)})${splitNote} with ${formatScore(scores.get(player))}`);
+      log(`${player.name} ${winVerb(player.name)} ${potName} (${money(potAmount)})${splitNote} with ${formatScore(scores.get(player))}`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
-        log(`${potName}: ${player.name} receives +$1 (rounding).`);
+        log(`${potName}: ${player.name} ${simpleVerb(player.name, 'receive')} +$1 (rounding).`);
       }
     }
     state.players.forEach((player) => {
@@ -106,11 +106,11 @@ export const showdown = (state, log) => {
     for (const player of bestPlayers) {
       player.stack += share;
       const splitNote = bestPlayers.length > 1 ? ` [${money(share)} each]` : '';
-      log(`${player.name} wins ${potName} (${money(pot.amount)})${splitNote} with ${formatScore(scores.get(player))}`);
+      log(`${player.name} ${winVerb(player.name)} ${potName} (${money(pot.amount)})${splitNote} with ${formatScore(scores.get(player))}`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
-        log(`${potName}: ${player.name} receives +$1 (rounding).`);
+        log(`${potName}: ${player.name} ${simpleVerb(player.name, 'receive')} +$1 (rounding).`);
       }
     }
   });

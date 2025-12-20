@@ -21,6 +21,8 @@ const randInt = (n) => {
   crypto.getRandomValues(u);
   return Number(u[0] % n);
 };
+const youVerb = (name, base, other = `${base}s`) => (name === 'You' ? base : other);
+const youBe = (name) => (name === 'You' ? 'are' : 'is');
 
 const measureCharWidth = (el) => {
   const sample = document.createElement('span');
@@ -656,11 +658,11 @@ const postBlinds = () => {
 const actFold = (i) => {
   const p = GAME.players[i];
   p.folded = true;
-  log(`${p.name} folds.`);
+  log(`${p.name} ${youVerb(p.name, 'fold')}.`);
 };
 const actCheck = (i) => {
   const p = GAME.players[i];
-  log(`${p.name} checks.`);
+  log(`${p.name} ${youVerb(p.name, 'check')}.`);
 };
 const actCall = (i) => {
   const p = GAME.players[i];
@@ -670,7 +672,11 @@ const actCall = (i) => {
   p.roundBet += pay;
   p.totalBet += pay;
   if (p.stack === 0) p.allIn = true;
-  log(`${p.name} ${toCall === 0 ? 'checks' : 'calls ' + money(pay)}.`);
+  if (toCall === 0) {
+    log(`${p.name} ${youVerb(p.name, 'check')}.`);
+  } else {
+    log(`${p.name} ${youVerb(p.name, 'call')} ${money(pay)}.`);
+  }
 };
 const actRaiseTo = (i, raiseTo) => {
   const p = GAME.players[i];
@@ -685,13 +691,14 @@ const actRaiseTo = (i, raiseTo) => {
     GAME.lastRaise = p.roundBet - GAME.currentBet;
     GAME.currentBet = p.roundBet;
     GAME.lastRaiser = i;
-    log(`${p.name} ${GAME.street === 'preflop' && p.roundBet <= GAME.bigBlind ? 'bets' : 'raises'} to ${money(p.roundBet)}.`);
+    const verb = GAME.street === 'preflop' && p.roundBet <= GAME.bigBlind ? 'bet' : 'raise';
+    log(`${p.name} ${youVerb(p.name, verb)} to ${money(p.roundBet)}.`);
   } else {
-    log(`${p.name} calls ${money(pay)} (all-in short).`);
+    log(`${p.name} ${youVerb(p.name, 'call')} ${money(pay)} (all-in short).`);
   }
   if (p.stack === 0) {
     p.allIn = true;
-    log(`${p.name} is all-in (${money(p.roundBet)} in this street).`);
+    log(`${p.name} ${youBe(p.name)} all-in (${money(p.roundBet)} in this street).`);
   }
 };
 const everyoneFoldedExceptOne = () => {
@@ -723,7 +730,7 @@ const bettingRound = async (startIndex) => {
       const pot = GAME.pot();
       lone.stack += pot;
       for (const p of GAME.players) p.totalBet = 0;
-      log(`${lone.name} wins uncontested pot ${money(pot)}.`);
+      log(`${lone.name} ${youVerb(lone.name, 'win')} uncontested pot ${money(pot)}.`);
       return 'ended';
     }
     GAME.current = i;
@@ -833,7 +840,7 @@ const showdown = () => {
       if (rem > 0) {
         w.stack += 1;
         rem--;
-        log(`${potName}: ${w.name} receives +$1 (rounding).`);
+        log(`${potName}: ${w.name} ${youVerb(w.name, 'receive')} +$1 (rounding).`);
       }
     }
     for (const p of GAME.players) p.totalBet = 0;
@@ -864,7 +871,7 @@ const showdown = () => {
       if (rem > 0) {
         w.stack += 1;
         rem--;
-        log(`${potLabel}: ${w.name} receives +$1 (rounding).`);
+        log(`${potLabel}: ${w.name} ${youVerb(w.name, 'receive')} +$1 (rounding).`);
       }
     }
   });

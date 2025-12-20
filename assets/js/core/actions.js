@@ -1,4 +1,4 @@
-import { money } from '../utils.js';
+import { beVerb, money, simpleVerb } from '../utils.js';
 import { isAlive, nextAliveFrom } from './table.js';
 
 // Clear street-level bets after each betting round; blinds + total contributions
@@ -48,12 +48,12 @@ export const postBlinds = (state, log) => {
 export const actFold = (state, idx, log) => {
   const player = state.players[idx];
   player.folded = true;
-  log(`${player.name} folds.`);
+  log(`${player.name} ${simpleVerb(player.name, 'fold')}.`);
 };
 
 export const actCheck = (state, idx, log) => {
   const player = state.players[idx];
-  log(`${player.name} checks.`);
+  log(`${player.name} ${simpleVerb(player.name, 'check')}.`);
 };
 
 // Calling matches the current highest bet for this street. Short stacks get to
@@ -67,13 +67,13 @@ export const actCall = (state, idx, log) => {
   player.totalBet += pay;
   if (player.stack === 0) player.allIn = true;
   if (toCall === 0) {
-    log(`${player.name} checks.`);
+    log(`${player.name} ${simpleVerb(player.name, 'check')}.`);
   } else {
     const callNote = player.stack === 0 ? ' (all-in short)' : '';
-    log(`${player.name} calls ${money(pay)} to ${money(player.roundBet)} total${callNote}.`);
+    log(`${player.name} ${simpleVerb(player.name, 'call')} ${money(pay)} to ${money(player.roundBet)} total${callNote}.`);
   }
   if (player.allIn) {
-    log(`${player.name} is all-in (${money(player.roundBet)} total this street).`);
+    log(`${player.name} ${beVerb(player.name)} all-in (${money(player.roundBet)} total this street).`);
   }
 };
 
@@ -94,14 +94,14 @@ export const actRaiseTo = (state, idx, raiseTo, log) => {
     state.lastRaise = player.roundBet - state.currentBet;
     state.currentBet = player.roundBet;
     state.lastRaiser = idx;
-    log(`${player.name} raises to ${money(player.roundBet)} total.`);
+    log(`${player.name} ${simpleVerb(player.name, 'raise')} to ${money(player.roundBet)} total.`);
   } else {
     const paid = player.roundBet - prevBet;
     const callNote = player.stack === 0 ? ' (all-in short)' : '';
-    log(`${player.name} calls ${money(paid)} to ${money(player.roundBet)} total${callNote}.`);
+    log(`${player.name} ${simpleVerb(player.name, 'call')} ${money(paid)} to ${money(player.roundBet)} total${callNote}.`);
   }
   if (player.stack === 0) {
     player.allIn = true;
-    log(`${player.name} is all-in (${money(player.roundBet)} total this street).`);
+    log(`${player.name} ${beVerb(player.name)} all-in (${money(player.roundBet)} total this street).`);
   }
 };
