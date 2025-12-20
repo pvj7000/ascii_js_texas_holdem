@@ -2,22 +2,49 @@ import { RANK_VALUES } from './cards.js';
 
 // Hand evaluator tuned for 7-card Hold'em. Scores are tuples (`key`) where
 // higher comparisons win; `cat` is the category, followed by kicker values.
-const handCategoryNames = {
-  9: 'Straight Flush',
-  8: 'Four of a Kind',
-  7: 'Full House',
-  6: 'Flush',
-  5: 'Straight',
-  4: 'Three of a Kind',
-  3: 'Two Pair',
-  2: 'One Pair',
-  1: 'High Card',
+const rankName = (value) =>
+  ({
+    14: 'Ace',
+    13: 'King',
+    12: 'Queen',
+    11: 'Jack',
+    10: 'Ten',
+    9: 'Nine',
+    8: 'Eight',
+    7: 'Seven',
+    6: 'Six',
+    5: 'Five',
+    4: 'Four',
+    3: 'Three',
+    2: 'Two',
+  }[value] || String(value));
+
+const pluralRankName = (value) =>
+  ({
+    14: 'Aces',
+    13: 'Kings',
+    12: 'Queens',
+    11: 'Jacks',
+    10: 'Tens',
+    9: 'Nines',
+    8: 'Eights',
+    7: 'Sevens',
+    6: 'Sixes',
+    5: 'Fives',
+    4: 'Fours',
+    3: 'Threes',
+    2: 'Twos',
+  }[value] || `${value}s`);
+
+const hyphenRanks = (values) => values.map(rankName).join('-');
+
+const kickerText = (kickers) => {
+  if (!kickers.length) return '';
+  const labels = kickers.map(rankName);
+  if (labels.length === 1) return ` (${labels[0]} kicker)`;
+  if (labels.length === 2) return ` (${labels[0]} and ${labels[1]} kickers)`;
+  return ` (${labels.slice(0, -1).join(', ')} and ${labels.at(-1)} kickers)`;
 };
-
-const valueLabel = (value) => ({ 14: 'A', 13: 'K', 12: 'Q', 11: 'J' }[value] || String(value));
-
-const scoreName = (category, high) =>
-  handCategoryNames[category] + (high ? ` (${valueLabel(high)} high)` : '');
 
 export const compareScore = (a, b) => {
   for (let i = 0; i < Math.max(a.key.length, b.key.length); i++) {
@@ -92,7 +119,7 @@ export const eval5 = (cards) => {
       straightFlushHigh = 5;
     }
     if (straightFlushHigh) {
-      return { cat: 9, key: [9, straightFlushHigh], name: scoreName(9, straightFlushHigh) };
+      return { cat: 9, key: [9, straightFlushHigh], name: `Straight Flush, ${rankName(straightFlushHigh)}-High` };
     }
   }
   const groups = [...byRank.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0]);
@@ -102,12 +129,12 @@ export const eval5 = (cards) => {
       .slice(1)
       .map((g) => g[0])
       .sort((a, b) => b - a)[0];
-    return { cat: 8, key: [8, quad, kicker], name: scoreName(8, quad) };
+    return { cat: 8, key: [8, quad, kicker], name: `Four of a Kind, ${pluralRankName(quad)} (${rankName(kicker)} kicker)` };
   }
   if (groups[0][1] === 3 && (groups[1]?.[1] || 0) >= 2) {
     const trips = groups[0][0];
     const pair = groups[1][1] === 2 ? groups[1][0] : groups[2][0];
-    return { cat: 7, key: [7, trips, pair], name: scoreName(7, trips) };
+    return { cat: 7, key: [7, trips, pair], name: `Full House, ${pluralRankName(trips)} over ${pluralRankName(pair)}` };
   }
   if (flushSuit) {
     const top5 = clean
@@ -115,10 +142,10 @@ export const eval5 = (cards) => {
       .map((card) => card.v)
       .sort((a, b) => b - a)
       .slice(0, 5);
-    return { cat: 6, key: [6, ...top5], name: scoreName(6, top5[0]) };
+    return { cat: 6, key: [6, ...top5], name: `Flush, ${hyphenRanks(top5)}` };
   }
   if (straightHigh) {
-    return { cat: 5, key: [5, straightHigh], name: scoreName(5, straightHigh) };
+    return { cat: 5, key: [5, straightHigh], name: `Straight, ${rankName(straightHigh)}-High` };
   }
   if (groups[0][1] === 3) {
     const trips = groups[0][0];
@@ -127,7 +154,7 @@ export const eval5 = (cards) => {
       .map((g) => g[0])
       .sort((a, b) => b - a)
       .slice(0, 2);
-    return { cat: 4, key: [4, trips, ...kickers], name: scoreName(4, trips) };
+    return { cat: 4, key: [4, trips, ...kickers], name: `Three of a Kind, ${pluralRankName(trips)}${kickerText(kickers)}` };
   }
   if (groups[0][1] === 2 && groups[1]?.[1] === 2) {
     const [highPair, lowPair] = [groups[0][0], groups[1][0]].sort((a, b) => b - a);
@@ -135,7 +162,11 @@ export const eval5 = (cards) => {
       .slice(2)
       .map((g) => g[0])
       .sort((a, b) => b - a)[0];
-    return { cat: 3, key: [3, highPair, lowPair, kicker], name: scoreName(3, highPair) };
+    return {
+      cat: 3,
+      key: [3, highPair, lowPair, kicker],
+      name: `Two Pair, ${pluralRankName(highPair)} and ${pluralRankName(lowPair)}${kickerText([kicker])}`,
+    };
   }
   if (groups[0][1] === 2) {
     const pair = groups[0][0];
@@ -144,10 +175,10 @@ export const eval5 = (cards) => {
       .map((g) => g[0])
       .sort((a, b) => b - a)
       .slice(0, 3);
-    return { cat: 2, key: [2, pair, ...kickers], name: scoreName(2, pair) };
+    return { cat: 2, key: [2, pair, ...kickers], name: `One Pair, ${pluralRankName(pair)}${kickerText(kickers)}` };
   }
   const highs = ranks.slice().sort((a, b) => b - a).slice(0, 5);
-  return { cat: 1, key: [1, ...highs], name: `High Card (${valueLabel(highs[0])} high)` };
+  return { cat: 1, key: [1, ...highs], name: `High Card, ${hyphenRanks(highs)}` };
 };
 
 // Enumerate the best 5-card hand from 6 or 7 available cards. For 7, we check

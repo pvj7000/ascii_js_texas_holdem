@@ -1,4 +1,4 @@
-import { money, winVerb } from '../utils.js';
+import { money } from '../utils.js';
 import { compareScore, eval7 } from './evaluator.js';
 
 // Build a stack of main + side pots by looking at each unique contribution
@@ -45,13 +45,14 @@ export const showdown = (state, log) => {
     }
     const share = Math.floor(potAmount / bestPlayers.length || 1);
     let remainder = potAmount - share * bestPlayers.length;
+    const potName = 'MAIN POT';
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${player.name} ${winVerb(player.name)} ${money(share)} with ${scores.get(player).name}.`);
+      log(`${potName} (${money(potAmount)}): won by ${player.name} (${money(share)}) with ${scores.get(player).name}.`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
-        log(`${player.name} receives +$1 (rounding).`);
+        log(`${potName}: ${player.name} receives +$1 (rounding).`);
       }
     }
     state.players.forEach((player) => {
@@ -62,7 +63,7 @@ export const showdown = (state, log) => {
   const scores = new Map();
   for (const player of alive) scores.set(player, eval7(player.hand, state.board));
   const pots = buildPots(state);
-  for (const pot of pots) {
+  pots.forEach((pot, idx) => {
     if (pot.winners.length === 0) continue;
     let bestScore = null;
     let bestPlayers = [];
@@ -77,16 +78,17 @@ export const showdown = (state, log) => {
     }
     const share = Math.floor(pot.amount / bestPlayers.length || 1);
     let remainder = pot.amount - share * bestPlayers.length;
+    const potName = idx === 0 ? 'MAIN POT' : `SIDE POT #${idx}`;
     for (const player of bestPlayers) {
       player.stack += share;
-      log(`${player.name} ${winVerb(player.name)} ${money(share)} from a side pot with ${scores.get(player).name}.`);
+      log(`${potName} (${money(pot.amount)}): won by ${player.name} (${money(share)}) with ${scores.get(player).name}.`);
       if (remainder > 0) {
         player.stack += 1;
         remainder--;
-        log(`${player.name} receives +$1 (rounding).`);
+        log(`${potName}: ${player.name} receives +$1 (rounding).`);
       }
     }
-  }
+  });
   state.players.forEach((player) => {
     player.totalBet = 0;
   });
